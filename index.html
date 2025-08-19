@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-cover bg-center h-screen overflow-auto text-white" style="background-image: url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg');">
+    <!-- Authentication Section -->
+    <div id="auth" class="bg-white text-gray-800 p-8 rounded-lg shadow-lg w-96 text-center mx-auto mt-20">
+        <h2 class="text-2xl font-bold text-purple-600">Welcome to Recipe Finder</h2>
+        <h4 class="text-lg mb-4">Search Delicious Recipes!</h4>
+
+        <div id="registerContainer">
+            <input type="text" id="regUser" placeholder="Username" class="w-full p-2 border rounded mb-2 text-gray-800">
+            <div class="relative">
+                <input type="password" id="regPass" placeholder="Password" class="w-full p-2 border rounded mb-2 text-gray-800" autocomplete="off">
+                <i id="eyeIconReg" class="fas fa-eye absolute right-3 top-3 cursor-pointer"></i>
+            </div>
+            <button onclick="register()" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Register</button>
+            <p class="mt-2 text-sm">Already have an account? <a href="#" onclick="showLogin()" class="text-blue-500">Login</a></p>
+        </div>
+
+        <div id="loginContainer" class="hidden">
+            <input type="text" id="loginUser" placeholder="Username" class="w-full p-2 border rounded mb-2 text-gray-800">
+            <div class="relative">
+                <input type="password" id="loginPass" placeholder="Password" class="w-full p-2 border rounded mb-2 text-gray-800" autocomplete="off">
+                <i id="eyeIconLogin" class="fas fa-eye absolute right-3 top-3 cursor-pointer"></i>
+            </div>
+            <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+            <p class="mt-2 text-sm">Don't have an account? <a href="#" onclick="showRegister()" class="text-blue-500">Register</a></p>
+        </div>
+    </div>
+
+    <!-- Logout Button -->
+    <button id="logout" onclick="logout()" class="hidden absolute top-5 right-5 bg-red-500 text-white px-4 py-2 rounded">Logout</button>
+
+    <!-- Recipe Finder Section -->
+    <div id="app" class="hidden text-center w-full p-8">
+        <h1 class="text-3xl font-bold text-yellow-400">Find Meals For Your Ingredients</h1>
+
+        <div class="flex justify-center mt-4">
+            <input type="text" id="search" placeholder="Enter an ingredient" class="w-full sm:w-1/2 p-2 border rounded-l-md text-gray-800">
+            <button onclick="searchRecipes()" class="bg-orange-500 text-white px-4 sm:px-6 rounded-r-md">🔍</button>
+        </div>
+
+        <h2 class="text-2xl font-bold mt-4">Your Search Results:</h2>
+        <div id="results" class="flex flex-wrap justify-center mt-4"></div>
+    </div>
+
+    <!-- Recipe Popup -->
+    <div id="recipePopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white text-gray-800 p-6 rounded-lg shadow-lg w-96 max-w-full max-h-[80vh] overflow-y-auto relative">
+            <button onclick="closePopup()" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded">×</button>
+            <h2 id="recipeTitle" class="text-xl font-bold text-purple-600"></h2>
+            <p id="recipeInstructions" class="mt-2"></p>
+            <h3 class="mt-4 font-bold">Ingredients:</h3>
+            <ul id="recipeIngredients" class="list-disc pl-5 max-h-40 overflow-y-auto"></ul>
+
+            <!-- YouTube Video Embed -->
+            <div id="recipeVideo" class="mt-4 w-full aspect-w-16 aspect-h-9">
+                <!-- The video will be inserted here dynamically -->
+            </div>
+
+            <!-- Save and Like Buttons -->
+            <div class="mt-4 flex justify-between">
+                <button id="saveBtn" onclick="saveRecipe()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Save</button>
+                <button id="likeBtn" onclick="likeRecipe()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    <i id="likeIcon" class="fas fa-heart"></i> Like
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Recipes Section -->
+    <div id="savedRecipesSection" class="mt-8 text-center">
+        <h2 class="text-2xl font-bold text-yellow-400">Saved Recipes</h2>
+        <div id="savedRecipes" class="flex flex-wrap justify-center mt-4"></div>
+    </div>
+
+    <!-- Liked Recipes Section -->
+    <div id="likedRecipesSection" class="mt-8 text-center">
+        <h2 class="text-2xl font-bold text-yellow-400">Liked Recipes</h2>
+        <div id="likedRecipes" class="flex flex-wrap justify-center mt-4"></div>
+    </div>
+
+    <script>
+        let currentRecipe = null; // To store the currently viewed recipe for saving/liking
+
+        // Toggle password visibility for registration
+        document.getElementById('eyeIconReg').addEventListener('click', function () {
+            const passwordField = document.getElementById('regPass');
+            const icon = document.getElementById('eyeIconReg');
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // Toggle password visibility for login
+        document.getElementById('eyeIconLogin').addEventListener('click', function () {
+            const passwordField = document.getElementById('loginPass');
+            const icon = document.getElementById('eyeIconLogin');
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        function register() {
+            const username = document.getElementById('regUser').value.trim();
+            const password = document.getElementById('regPass').value.trim();
+            if (username && password) {
+                if (localStorage.getItem(username)) {
+                    alert('Username already exists! Try a different one.');
+                } else {
+                    localStorage.setItem(username, password);
+                    alert('Registration successful! Redirecting to login...');
+                    showLogin();
+                }
+            } else {
+                alert('Please enter a valid username and password.');
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('registerContainer').classList.add('hidden');
+            document.getElementById('loginContainer').classList.remove('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('registerContainer').classList.remove('hidden');
+            document.getElementById('loginContainer').classList.add('hidden');
+        }
+
+        function login() {
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            if (localStorage.getItem(username) === password) {
+                alert('Login successful!');
+                document.getElementById('auth').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                document.getElementById('logout').classList.remove('hidden');
+            } else {
+                alert('Invalid username or password.');
+            }
+        }
+
+        function logout() {
+            document.getElementById('auth').classList.remove('hidden');
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('logout').classList.add('hidden');
+        }
+
+        function searchRecipes() {
+            const query = document.getElementById('search').value.trim();
+            if (!query) {
+                alert('Please enter an ingredient!');
+                return;
+            }
+
+            fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('results').innerHTML = '';
+                    if (data.meals) {
+                        data.meals.forEach(meal => {
+                            const recipeCard = document.createElement('div');
+                            recipeCard.classList.add('m-2', 'p-4', 'bg-white', 'rounded-lg', 'shadow-lg', 'cursor-pointer', 'w-64');
+                            recipeCard.innerHTML = `<img src="${meal.strMealThumb}" class="w-full h-40 rounded-lg"><h3 class="text-lg font-bold mt-2">${meal.strMeal}</h3>`;
+                            recipeCard.onclick = () => showRecipePopup(meal);
+                            document.getElementById('results').appendChild(recipeCard);
+                        });
+                    } else {
+                        alert('No recipes found for this ingredient.');
+                    }
+                })
+                .catch(err => {
+                    alert('Error fetching data. Please try again later.');
+                    console.error(err);
+                });
+        }
+
+        function showRecipePopup(meal) {
+            currentRecipe = meal; // Store the current meal for saving or liking
+            document.getElementById('recipeTitle').innerText = meal.strMeal;
+            document.getElementById('recipeInstructions').innerText = meal.strInstructions;
+
+            // List ingredients
+            const ingredientsList = document.getElementById('recipeIngredients');
+            ingredientsList.innerHTML = ''; // Clear existing ingredients
+            for (let i = 1; i <= 20; i++) {
+                const ingredient = meal[`strIngredient${i}`];
+                const measure = meal[`strMeasure${i}`];
+                if (ingredient && ingredient.trim()) {
+                    const listItem = document.createElement('li');
+                    listItem.innerText = `${ingredient} (${measure})`;
+                    ingredientsList.appendChild(listItem);
+                }
+            }
+
+            // Embed a recipe video if it exists
+            const videoId = meal.strYoutube ? meal.strYoutube.split('v=')[1] : null;
+            const recipeVideoDiv = document.getElementById('recipeVideo');
+            recipeVideoDiv.innerHTML = '';
+            if (videoId) {
+                recipeVideoDiv.innerHTML = ` 
+                    <iframe
+                        class="w-full h-full rounded-lg shadow-lg"
+                        src="https://www.youtube.com/embed/${videoId}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                `;
+            } else {
+                recipeVideoDiv.innerHTML = `<p class="text-gray-500">No video available for this recipe.</p>`;
+            }
+
+            // Show the popup
+            document.getElementById('recipePopup').classList.remove('hidden');
+
+            // Check if recipe is already liked
+            const likedRecipes = JSON.parse(localStorage.getItem('likedRecipes')) || [];
+            const isLiked = likedRecipes.some(recipe => recipe.idMeal === currentRecipe.idMeal);
+            const likeIcon = document.getElementById('likeIcon');
+            if (isLiked) {
+                likeIcon.classList.add('text-red-500');
+            } else {
+                likeIcon.classList.remove('text-red-500');
+            }
+        }
+
+        function closePopup() {
+            document.getElementById('recipePopup').classList.add('hidden');
+        }
+
+        function saveRecipe() {
+            const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes')) || [];
+            const existingRecipe = savedRecipes.find(recipe => recipe.idMeal === currentRecipe.idMeal);
+            if (!existingRecipe) {
+                savedRecipes.push(currentRecipe);
+                localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+                alert('Recipe saved!');
+                loadSavedRecipes();
+            } else {
+                alert('This recipe is already saved.');
+            }
+        }
+
+        function likeRecipe() {
+            const likedRecipes = JSON.parse(localStorage.getItem('likedRecipes')) || [];
+            const existingRecipe = likedRecipes.find(recipe => recipe.idMeal === currentRecipe.idMeal);
+            if (!existingRecipe) {
+                likedRecipes.push(currentRecipe);
+                localStorage.setItem('likedRecipes', JSON.stringify(likedRecipes));
+                alert('Recipe liked!');
+                loadLikedRecipes();
+
+                // Update the heart icon
+                document.getElementById('likeIcon').classList.add('text-red-500');
+            } else {
+                alert('This recipe is already liked.');
+            }
+        }
+
+        // Load saved recipes from local storage
+        function loadSavedRecipes() {
+            const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes')) || [];
+            const savedRecipesContainer = document.getElementById('savedRecipes');
+            savedRecipesContainer.innerHTML = ''; // Clear the container before loading
+
+            savedRecipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.classList.add('m-2', 'p-4', 'bg-white', 'rounded-lg', 'shadow-lg', 'cursor-pointer', 'w-64');
+                card.innerHTML = `
+                    <img src="${recipe.strMealThumb}" class="w-full h-40 rounded-lg">
+                    <h3 class="text-lg font-bold mt-2">${recipe.strMeal}</h3>
+                    <div class="flex justify-between items-center mt-2">
+                        <button onclick="deleteSavedRecipe('${recipe.idMeal}')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                            Delete
+                        </button>
+                    </div>
+                `;
+                savedRecipesContainer.appendChild(card);
+            });
+        }
+
+        // Delete a saved recipe
+        function deleteSavedRecipe(recipeId) {
+            let savedRecipes = JSON.parse(localStorage.getItem('savedRecipes')) || [];
+            savedRecipes = savedRecipes.filter(recipe => recipe.idMeal !== recipeId);
+            localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+            loadSavedRecipes();  // Refresh saved recipes list
+        }
+
+        // Load liked recipes from local storage
+        function loadLikedRecipes() {
+            const likedRecipes = JSON.parse(localStorage.getItem('likedRecipes')) || [];
+            const likedRecipesContainer = document.getElementById('likedRecipes');
+            likedRecipesContainer.innerHTML = ''; // Clear the container before loading
+
+            likedRecipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.classList.add('m-2', 'p-4', 'bg-white', 'rounded-lg', 'shadow-lg', 'cursor-pointer', 'w-64');
+                card.innerHTML = `
+                    <img src="${recipe.strMealThumb}" class="w-full h-40 rounded-lg">
+                    <h3 class="text-lg font-bold mt-2">${recipe.strMeal}</h3>
+                    <div class="flex justify-between items-center mt-2">
+                        <button onclick="dislikeRecipe('${recipe.idMeal}')" class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">
+                            Dislike
+                        </button>
+                    </div>
+                `;
+                likedRecipesContainer.appendChild(card);
+            });
+        }
+
+        // Dislike a liked recipe
+        function dislikeRecipe(recipeId) {
+            let likedRecipes = JSON.parse(localStorage.getItem('likedRecipes')) || [];
+            likedRecipes = likedRecipes.filter(recipe => recipe.idMeal !== recipeId);
+            localStorage.setItem('likedRecipes', JSON.stringify(likedRecipes));
+            loadLikedRecipes();  // Refresh liked recipes list
+        }
+
+        
+        loadSavedRecipes();
+        loadLikedRecipes();
+    </script>
+</body>
+</html>
