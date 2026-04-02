@@ -1,7 +1,7 @@
 # 🍲 Recipe Finder App
 
 A simple and interactive **Recipe Finder application** that allows users to search meals by name, view cooking instructions, and manage favorite recipes.  
-The app uses **TheMealDB API** to fetch real-time recipe data and stores user interactions in localStorage.
+The app uses **TheMealDB API** to fetch real-time recipe data and stores user interactions in localStorage..
 
 ---
 
