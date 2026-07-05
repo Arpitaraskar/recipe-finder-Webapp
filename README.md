@@ -5,7 +5,7 @@ The app uses **TheMealDB API** to fetch real-time recipe data and stores user in
 
 ---
 
-## 🚀 Features
+# 🚀 Features
 - 👤 **User Authentication** (Register & Login with localStorage)  
 - 🔎 **Search Recipes** by meal name or ingredient  
 - 📸 **View meal details** – image, ingredients, and cooking instructions  
