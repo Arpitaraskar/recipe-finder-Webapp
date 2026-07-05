@@ -16,7 +16,7 @@ The app uses **TheMealDB API** to fetch real-time recipe data and stores user in
 
 ---
 
-## 🛠️ Tech Stack
+# 🛠️ Tech Stack
 - **Frontend**: HTML, CSS, JavaScript (Vanilla JS)  
 - **Styling**: TailwindCSS + FontAwesome  
 - **API**: [TheMealDB](https://www.themealdb.com/)  
